@@ -1,0 +1,57 @@
+{
+  "type" : "index",
+  "spec" : {
+    "dataSchema" : {
+      "dataSource" : "analysis_day",
+      "parser" : {
+        "type" : "string",
+        "parseSpec" : {
+          "format" : "json",
+          "dimensionsSpec" : {
+            "dimensions" : [
+              "pt_user",
+			  "pt_service",
+			  "pt_code",
+			  "pt_ip",
+			  "pt_user_ip",
+			  "pt_date"
+            ]
+          },
+          "timestampSpec": {
+            "column": "timestamp",
+            "format": "iso"
+          }
+        }
+      },
+      "metricsSpec" : [
+		{
+		  "name" : "pt_count",
+		  "type" : "longSum",
+		  "fieldName" : "pt_count"
+		}
+	  ],
+      "granularitySpec" : {
+        "type" : "uniform",
+        "segmentGranularity" : "month",
+        "queryGranularity" : "day",
+        "intervals":["${range}"],
+        "rollup" : false
+      }
+    },
+    "ioConfig" : {
+      "type" : "index",
+      "firehose" : {
+        "type" : "local",
+        "baseDir" : "/opt/app/druid/sbin/data/",
+        "filter" : "${file}"
+      },
+      "appendToExisting":true
+    },
+    "tuningConfig" : {
+      "type" : "index",
+      "targetPartitionSize" : 5000000,
+      "maxRowsInMemory" : 25000,
+      "forceExtendableShardSpecs" : true
+    }
+  }
+}

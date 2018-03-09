@@ -1,0 +1,136 @@
+version: '3.4'
+
+# 网络
+networks:
+    default:
+        external:
+            name: bridge    
+
+# 模板
+x-app:
+    &x-app
+    
+    # 主机
+    hostname: $app
+    container_name: $app
+    image: jdk:latest
+    privileged: true
+
+    # 网络
+    network_mode: bridge
+    extra_hosts:
+        - local:192.168.137.1
+   
+    # 存储
+    volumes:
+        - ./$app:/opt/app/$app
+    
+    # 环境
+    env_file:
+        - ./$app/docker.env
+    environment:
+        - APP_HOME=/opt/app/$app
+        #- http_proxy=http://172.17.18.80:8080
+        #- https_proxy=http://172.17.18.80:8080
+        
+    # 初始
+    working_dir: /opt/app/$app    
+    command: /opt/app/$app/docker.sh
+
+# JDK
+x-jdk:
+    &x-jdk
+    jdk:
+        hostname: jdk
+        container_name: jdk
+        image: jdk:latest
+        build:
+            context: ./jdk
+            dockerfile: build.conf
+            args:
+                - http_proxy=http://172.17.18.80:8080
+                - https_proxy=http://172.17.18.80:8080
+# DB   
+x-db:
+    &x-db
+    mysql:
+        <<: *x-app
+        image: mysql:5.6
+        volumes:
+            - ./$app:/opt/app/$app
+            - ./$app/log:/var/log/mysql
+            - ./$app/data:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+        ports:
+            - 3309:3306
+        command: []
+        
+# 服务
+services:
+    <<: *x-db
+    <<: *x-jdk
+    zk:
+        <<: *x-app
+        ports:
+            - 2181:2181
+    drill: 
+        <<: *x-app
+        ports:
+            - 8047:8047
+            - 31010:31010
+            - 31011:31011
+            - 31012:31012
+    hdfs: 
+        <<: *x-app
+        ports:
+            - 9000:9000
+            - 8088:8088
+            - 8042:8042
+            - 50070:50070
+            - 10000:10000
+            - 16010:16010
+    hbase: 
+        <<: *x-app
+        ports:
+            - 8765:8765
+    spark: 
+        <<: *x-app
+        ports:
+            - 4040:4040
+            - 8080:8080
+            - 8090:8090
+            - 7077:7077
+            - 6066:6066
+            - 10000:10000
+    zeppelin:
+        <<: *x-app
+        volumes:
+            - ./$app:/opt/app/$app
+            - ./spark:/opt/app/spark
+        ports:
+            - 8060:8080
+    elk:
+        <<: *x-app
+        volumes:
+            - ./$app:/opt/app/$app
+            - /var/log:/var/log
+        ports:
+            - 9000:9000
+            - 9200:9200
+            - 9300:9300
+            - 5601:5601
+            - 5044:5044
+    elk2:
+        <<: *x-app
+        ports:
+            - 9000:9000
+            - 9200:9200
+            - 9300:9300
+            - 5601:5601
+    druid:
+        <<: *x-app
+        ports:
+            - 8200:8200
+            - 9095:9095
+            - 8081-8110:8081-8110
