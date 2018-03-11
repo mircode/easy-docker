@@ -17,10 +17,15 @@ service install/uninstall/start/stop/restart/ssh/log/debug/docker name
 service ps/ls/top
 ```
 当前文件列表
+
 ![ls][2]
+
 当前正在运行的容器
+
 ![ps][3]
+
 容器资源占有率
+
 ![top][4]
 
 
